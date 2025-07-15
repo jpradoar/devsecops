@@ -1,0 +1,71 @@
+name: DevSecOps Pipeline
+on:
+  
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'terraform/*.tf'
+      - '.github/workflows/devsecops.yaml'
+  
+  push:
+    branches:
+      - development
+    paths:
+      - 'terraform/**'
+      - '.github/workflows/devsecops.yaml'
+
+
+jobs:
+#####################################
+#  INFRAESTRUCTURE
+#####################################
+  INFRASTRUCTURE-CICD:
+    runs-on: ubuntu-latest
+    env:
+      AWS_ACCESS_KEY_ID:      test
+      AWS_SECRET_ACCESS_KEY:  test
+      AWS_DEFAULT_REGION:     us-east-1
+      AWS_ENDPOINT_URL:       'http://localhost:4566'
+      TF_OUTPUT_PATH:         '/tmp/output'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+
+
+
+
+#####################################
+#  APPLICATIONS
+#####################################
+  APLICATION-CICD:
+    env:
+      DH_REPO_OWNER:    'jpradoar'
+      REPO_APP:         'devsecops_demo'
+      BUILD_CONTEXT:    './app'
+      #
+      SLACK_CHANNEL:    'builds-and-ci'
+      SLACK_MSG_COLOR:  '#0092ff'
+      COMMITER_NAME:    'AutoCommit'
+      VULN_SEVERITY:    'CRITICAL'
+      VULN_TYPE:        'os,library'
+      VULN_FORMAT:      'table'
+      VULN_TIMEOUT_SCAN: '2m0s'
+      VULN_SCANNERS:    'vuln,secret,misconfig,license'
+      VULN_IGNORED_LIC: 'MIT' # MIT,LGPL,MPL-2.0
+      VULN_EXIT_CODE:   1
+      TRIVY_DISABLE_VEX_NOTICE: true
+      TRIVY_REPOSITORY: 'public.ecr.aws/aquasecurity/trivy-db:2'
+
+    runs-on: ubuntu-latest
+    permissions:
+      contents:         write
+      security-events:  write
+      actions:          read
+      issues:           write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
