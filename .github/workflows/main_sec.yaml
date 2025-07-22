@@ -1,4 +1,4 @@
-name: DevSecOps Pipeline
+name: BASSICS-CICD
 on:
   
   pull_request:
