@@ -80,7 +80,7 @@ jobs:
           SLACK_CHANNEL: ${{ env.SLACK_CHANNEL }}
           SLACK_COLOR: '#ce04d1'
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}          
-          SLACK_TITLE: ':warning: Terraform validation'
+          SLACK_TITLE: ':img_terraform: Terraform validation'
           SLACK_MESSAGE: 'Terraform validate has failed. Next time, please check your code with `terraform validate`.'
 
       - name: Terraform Format
