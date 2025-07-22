@@ -200,6 +200,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y trivy
 
+      - name: show docker images
+        run: docker images
+
       - name: Run Trivy scan on Docker image
         id: trivy_scan
         continue-on-error: true
@@ -217,7 +220,9 @@ jobs:
             --db-repository ${{ env.TRIVY_REPOSITORY }} \
             --ignore-unfixed \
             -o ./vuln_scans/${{ env.REPO_APP }}_vuln_scan.table \
-            'jpradoar/${{ env.REPO_APP }}:${{ steps.nversion.outputs.NEW_VERSION }}'
+            '${{ env.REPO_APP }}:${{ steps.nversion.outputs.NEW_VERSION }}'
+
+# 'jpradoar/${{ env.REPO_APP }}:${{ steps.nversion.outputs.NEW_VERSION }}'
 
       - name: Upload vulnerability report as artifact
         if: steps.trivy_scan.outcome == 'failure'
@@ -270,9 +275,9 @@ jobs:
         uses: rtCamp/action-slack-notify@v2
         env:
           SLACK_CHANNEL: ${{ env.SLACK_CHANNEL }}
-          SLACK_COLOR: '#0092ff'
+          SLACK_COLOR: '#2c74e8'
           SLACK_MESSAGE: 'URL: https://hub.docker.com/repository/docker/jpradoar/${{ env.REPO_APP }}'
-          SLACK_TITLE: ':img_leak: Docker image built: [ ${{ env.REPO_APP }}:${{ steps.nversion.outputs.NEW_VERSION }} ]'
+          SLACK_TITLE: ':img_docker: Docker image built: [ ${{ env.REPO_APP }}:${{ steps.nversion.outputs.NEW_VERSION }} ]'
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
 
       - name: Slack Notification - Vulnerabilities detected
@@ -280,7 +285,7 @@ jobs:
         uses: rtCamp/action-slack-notify@v2
         env:
           SLACK_CHANNEL: ${{ env.SLACK_CHANNEL }}
-          SLACK_COLOR: '#FF0000'
+          SLACK_COLOR: '#2c74e8'
           SLACK_MESSAGE: 'Vulnerabilities found in image ${{ env.REPO_APP }}. Please check the [report](https://github.com/jpradoar/event-driven-architecture/blob/main/vuln_scans/${{ env.REPO_APP }}_vuln_scan.table)'
-          SLACK_TITLE: ':skull: Vulnerability detected in: [ ${{ env.REPO_APP }}:${{ steps.nversion.outputs.NEW_VERSION }} ]'
+          SLACK_TITLE: ':img_leak: Vulnerability detected in: [ ${{ env.REPO_APP }}:${{ steps.nversion.outputs.NEW_VERSION }} ]'
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
