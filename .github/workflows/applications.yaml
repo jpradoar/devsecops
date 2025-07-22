@@ -27,8 +27,11 @@ jobs:
 
     env:
       DH_REPO_OWNER:       'jpradoar'
+      DOCKER_IMAGE_NAME:   'insecure_image'
+
       GH_REPO_OWNER:       'jpradoar'
-      REPO_APP:            'insecure_image'
+      GH_REPO_NAME:        'devsecops'
+
       BUILD_CONTEXT:       './app'
       COMMITER_NAME:       'AutoCommit'
       VULN_SEVERITY:       'CRITICAL'
@@ -73,7 +76,7 @@ jobs:
       - name: Show last version of Docker Hub image
         id: last_version_remote_file
         run: |
-          LastVersion=$(curl -s "https://hub.docker.com/v2/repositories/${{ env.DH_REPO_OWNER }}/${{ env.REPO_APP }}/tags/?page_size=10" \
+          LastVersion=$(curl -s "https://hub.docker.com/v2/repositories/${{ env.DH_REPO_OWNER }}/${{ env.DOCKER_IMAGE_NAME }}/tags/?page_size=10" \
             | jq -r '.results[].name' | grep -v latest | sort -V | tail -1)
           echo "LAST_VERSION=$LastVersion" >> "$GITHUB_OUTPUT"
 
@@ -101,7 +104,7 @@ jobs:
       - name: Build Docker image
         id: docker_build
         run:
-          docker build -t ${{ env.DH_REPO_OWNER }}/${{ env.REPO_APP }}:${{ steps.nversion.outputs.NEW_VERSION }} ${{ env.BUILD_CONTEXT }}
+          docker build -t ${{ env.DH_REPO_OWNER }}/${{ env.DOCKER_IMAGE_NAME }}:${{ steps.nversion.outputs.NEW_VERSION }} ${{ env.BUILD_CONTEXT }}
 
 
       - name: Install Trivy
@@ -121,8 +124,8 @@ jobs:
         continue-on-error: true
         run: |
           mkdir -p ./vuln_scans
-          wget -N https://raw.githubusercontent.com/jpradoar/event-driven-architecture/refs/heads/main/vuln_scans/html.tpl; 
-          rm -rf ./vuln_scans/${{ env.REPO_APP }}_vuln_scan.html; 
+          wget -qN https://raw.githubusercontent.com/${{ env.GH_REPO_OWNER }}/${{ env.GH_REPO_NAME }}/refs/heads/development/vuln_scans/html.tpl; 
+          rm -rf ./vuln_scans/${{ env.GH_REPO_OWNER }}_vuln_scan.html; 
           trivy image \
             --scanners ${{ env.VULN_SCANNERS }} \
             --severity ${{ env.VULN_SEVERITY }} \
@@ -135,40 +138,39 @@ jobs:
             --exit-code ${{ env.VULN_EXIT_CODE }} \
             --db-repository ${{ env.TRIVY_REPOSITORY }} \
             --ignore-unfixed \
-            -o ./vuln_scans/${{ env.REPO_APP }}_vuln_scan.html \
-            '${{ env.GH_REPO_OWNER }}/${{ env.REPO_APP }}:${{ steps.nversion.outputs.NEW_VERSION }}'
+            -o ./vuln_scans/${{ env.DOCKER_IMAGE_NAME }}_vuln_scan.html \
+            '${{ env.DH_REPO_OWNER }}/${{ env.DOCKER_IMAGE_NAME }}:${{ steps.nversion.outputs.NEW_VERSION }}'
 
-# 'jpradoar/${{ env.REPO_APP }}:${{ steps.nversion.outputs.NEW_VERSION }}'
 
       - name: Upload vulnerability report as artifact
         if: steps.trivy_scan.outcome == 'failure'
         uses: actions/upload-artifact@v4
         with:
           name: trivy-report
-          path: ./vuln_scans/${{ env.REPO_APP }}_vuln_scan.html
+          path: ./vuln_scans/${{ env.DOCKER_IMAGE_NAME }}_vuln_scan.html
 
       - name: Show vulnerability report
         if: steps.trivy_scan.outcome == 'failure'
-        run: cat ./vuln_scans/${{ env.REPO_APP }}_vuln_scan.html
+        run: cat ./vuln_scans/${{ env.DOCKER_IMAGE_NAME }}_vuln_scan.html
 
       - name: Prepare GitHub issue body
         if: steps.trivy_scan.outcome == 'failure'
         run: |
           echo "### See detailed information in: " > /tmp/vuln_info.md
           echo "<br>![](https://custom-icon-badges.demolab.com/badge/Vulnerability-detected-red.svg) ![](https://custom-icon-badges.demolab.com/badge/Affected_version-${{ steps.nversion.outputs.NEW_VERSION }}-purple.svg) <br>" >> /tmp/vuln_info.md
-          echo "* Detected in image: [${{ env.REPO_APP }}](https://hub.docker.com/repository/docker/${{ env.DH_REPO_OWNER }}/${{ env.REPO_APP }}/general)" >> /tmp/vuln_info.md
+          echo "* Detected in image: [${{ env.DOCKER_IMAGE_NAME }}](https://hub.docker.com/repository/docker/${{ env.DH_REPO_OWNER }}/${{ env.DOCKER_IMAGE_NAME }}/general)" >> /tmp/vuln_info.md
           echo "* Detected in commit: ${{ github.sha }}" >> /tmp/vuln_info.md
-          echo "* Vulnerability report: [vuln_report](https://github.com/${{ env.DH_REPO_OWNER }}/${{ env.REPO_APP }}/blob/development/vuln_scans/${{ env.REPO_APP }}_vuln_scan.html)" >> /tmp/vuln_info.md
+          echo "* Vulnerability report: [vuln_report](https://github.com/${{ github.repository }}/blob/development/vuln_scans/${{ env.DOCKER_IMAGE_NAME }}_vuln_scan.html)" >> /tmp/vuln_info.md
 
 # PARA MAIN
-# echo "* Vulnerability report: [vuln_report](https://github.com/${{ env.DH_REPO_OWNER }}/${{ env.REPO_APP }}/blob/main/vuln_scans/${{ env.REPO_APP }}_vuln_scan.html)" >> /tmp/vuln_info.md
+# echo "* Vulnerability report: [vuln_report](https://github.com/${{ github.repository }}/blob/main/vuln_scans/${{ env.DOCKER_IMAGE_NAME }}_vuln_scan.html)" >> /tmp/vuln_info.md
 
       - name: Commit vulnerability report to repo
         if: steps.trivy_scan.outcome == 'failure'
         uses: EndBug/add-and-commit@v9
         with:
           message: 'AutoCommit: upload vuln scan report'
-          add: './vuln_scans/${{ env.REPO_APP }}_vuln_scan.html'
+          add: './vuln_scans/${{ env.DOCKER_IMAGE_NAME }}_vuln_scan.html'
 
 
 
@@ -183,7 +185,7 @@ jobs:
         run: |
           gh issue create \
             --repo ${{ github.repository }} \
-            --title ":skull: [vuln] Vulnerability in image ${{ env.REPO_APP }}" \
+            --title ":skull: [vuln] Vulnerability in image ${{ env.DOCKER_IMAGE_NAME }}" \
             --body-file '/tmp/vuln_info.md' \
             --assignee "${{ env.DH_REPO_OWNER }}" \
             --label bug \
@@ -197,15 +199,15 @@ jobs:
         with:
           context: ${{ env.BUILD_CONTEXT }}
           push: true
-          tags: ${{ env.DH_REPO_OWNER }}/${{ env.REPO_APP }}:${{ steps.nversion.outputs.NEW_VERSION }}
+          tags: ${{ env.DH_REPO_OWNER }}/${{ env.DOCKER_IMAGE_NAME }}:${{ steps.nversion.outputs.NEW_VERSION }}
 
       - name: Slack Notification - Docker image built
         uses: rtCamp/action-slack-notify@v2
         env:
           SLACK_CHANNEL: ${{ env.SLACK_CHANNEL }}
           SLACK_COLOR: '#2c74e8'
-          SLACK_MESSAGE: 'URL: https://hub.docker.com/repository/docker/${{ env.DH_REPO_OWNER }}/${{ env.REPO_APP }}'
-          SLACK_TITLE: ':img_docker: Docker image built: [ ${{ env.REPO_APP }}:${{ steps.nversion.outputs.NEW_VERSION }} ]'
+          SLACK_MESSAGE: 'URL: https://hub.docker.com/repository/docker/${{ env.DH_REPO_OWNER }}/${{ env.DOCKER_IMAGE_NAME }}'
+          SLACK_TITLE: ':img_docker: Docker image built: [ ${{ env.DOCKER_IMAGE_NAME }}:${{ steps.nversion.outputs.NEW_VERSION }} ]'
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
 
       - name: Slack Notification - Vulnerabilities detected
@@ -214,9 +216,9 @@ jobs:
         env:
           SLACK_CHANNEL: ${{ env.SLACK_CHANNEL }}
           SLACK_COLOR: '#2c74e8'
-          SLACK_MESSAGE: 'Vulnerabilities found in image ${{ env.REPO_APP }}. Please check the [report](https://github.com/${{ env.DH_REPO_OWNER }}/${{ env.REPO_APP }}/blob/development/vuln_scans/${{ env.REPO_APP }}_vuln_scan.html)'
+          SLACK_MESSAGE: 'Vulnerabilities found in image ${{ env.REPO_APP }}. Please check the [report](https://github.com/${{ github.repository }}/blob/development/vuln_scans/${{ env.DOCKER_IMAGE_NAME }}_vuln_scan.html)'
           SLACK_TITLE: ':img_leak: Vulnerability detected in: [ ${{ env.REPO_APP }}:${{ steps.nversion.outputs.NEW_VERSION }} ]'
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
 
 # PARA MAIN
-# SLACK_MESSAGE: 'Vulnerabilities found in image ${{ env.REPO_APP }}. Please check the [report](https://github.com/${{ env.DH_REPO_OWNER }}/${{ env.REPO_APP }}/blob/main/vuln_scans/${{ env.REPO_APP }}_vuln_scan.html)'
+# SLACK_MESSAGE: 'Vulnerabilities found in image ${{ env.REPO_APP }}. Please check the [report](https://github.com/${{ github.repository }}/blob/main/vuln_scans/${{ env.DOCKER_IMAGE_NAME }}_vuln_scan.html)'
