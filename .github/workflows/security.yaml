@@ -34,8 +34,14 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         continue-on-error: true
 
+      - name: Check for secret (Gitleak docker)
+        id: gitleaks_check_docker
+        run: docker run --rm -v $PWD:/data zricethezav/gitleaks:v8.28.0 dir /data -v --exit-code 1
+        continue-on-error: true
+
+
       - name: Slack Notification
-        if: steps.gitleaks_check.outcome == 'failure'
+        if: steps.gitleaks_check_docker.outcome == 'failure'
         uses: rtCamp/action-slack-notify@v2
         env:
           SLACK_COLOR:    '#fc0303'
