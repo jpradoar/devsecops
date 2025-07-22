@@ -8,7 +8,7 @@ on:
       - 'terraform/*.tf'
       - 'app/*'
       - '.github/workflows/devsecops.yaml'
-  
+
   push:
     branches:
       - main
