@@ -8,9 +8,9 @@ on:
       - 'terraform/*.tf'
       - '.github/workflows/devsecops.yaml'
   
-  push:
-    branches:
-      - development
+#  push:
+#    branches:
+#      - development
 #    paths:
 #      - 'terraform/**'
 #      - '.github/workflows/devsecops.yaml'
