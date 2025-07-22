@@ -45,9 +45,8 @@ jobs:
         if: steps.tf_validate.outcome == 'failure'
         uses: rtCamp/action-slack-notify@v2
         env:
-          SLACK_CHANNEL:  ${{ env.SLACK_CHANNEL }}
           SLACK_COLOR:    '#ce04d1'
-          SLACK_WEBHOOK:  ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_WEBHOOK:  ${{ secrets.SLACK_WH_INFRA }}
           SLACK_TITLE:    ':img_terraform: Terraform validation'
           SLACK_MESSAGE:  'Terraform validate has failed. Next time, please check your code with `terraform validate`.'
 
@@ -60,9 +59,8 @@ jobs:
         if: steps.terraform_fmt.outcome == 'failure'
         uses: rtCamp/action-slack-notify@v2
         env:
-          SLACK_CHANNEL: ${{ env.SLACK_CHANNEL }}
           SLACK_COLOR: '#ce04d1'
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_WEBHOOK: ${{ secrets.secrets.SLACK_WH_INFRA }}
           SLACK_TITLE: ':img_terraform: Terraform format validator'
           SLACK_MESSAGE: 'Terraform format validation has failed. Next time, please run `terraform fmt`.'
 

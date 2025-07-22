@@ -12,11 +12,6 @@ on:
     branches:
       - development_x
 
-env:
-  
-  CONTINUE_ON_WORKFLOW_ERRORS: true # false si sos mala onda y queres que se detenga el workflow (y no mande a slack)
-  SLACK_CHANNEL:    'general'
-  SLACK_MSG_COLOR:  '#0092ff'
 
 jobs:
 
@@ -43,8 +38,7 @@ jobs:
         if: steps.gitleaks_check.outcome == 'failure'
         uses: rtCamp/action-slack-notify@v2
         env:
-          SLACK_CHANNEL:  ${{ env.SLACK_CHANNEL }}
           SLACK_COLOR:    '#fc0303'
-          SLACK_WEBHOOK:  ${{ secrets.SLACK_WEBHOOK }}          
+          SLACK_WEBHOOK:  ${{ secrets.SLACK_WH_SECURITY }}          
           SLACK_TITLE:    ':warning: Gitleaks'
           SLACK_MESSAGE:  'Gitleaks found a security problem!!!'
