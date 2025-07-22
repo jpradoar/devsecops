@@ -1,4 +1,4 @@
-name: INFRA-CICD
+name: APPLICATION-CICD
 on:
   
   pull_request:
@@ -33,7 +33,7 @@ jobs:
       COMMITER_NAME:       'AutoCommit'
       VULN_SEVERITY:       'CRITICAL'
       VULN_TYPE:           'os,library'
-      VULN_FORMAT:         'table'
+      VULN_FORMAT:         'template'
       VULN_TIMEOUT_SCAN:   '2m0s'
       VULN_SCANNERS:       'vuln,secret,misconfig,license'
       VULN_IGNORED_LIC:    'MIT'
@@ -121,6 +121,8 @@ jobs:
         continue-on-error: true
         run: |
           mkdir -p ./vuln_scans
+          wget -N https://raw.githubusercontent.com/jpradoar/event-driven-architecture/refs/heads/main/vuln_scans/html.tpl; 
+          rm -rf ./vuln_scans/${{ env.REPO_APP }}_vuln_scan.html; 
           trivy image \
             --scanners ${{ env.VULN_SCANNERS }} \
             --severity ${{ env.VULN_SEVERITY }} \
@@ -129,10 +131,11 @@ jobs:
             --license-full \
             --ignored-licenses ${{ env.VULN_IGNORED_LIC }} \
             --format ${{ env.VULN_FORMAT }} \
+            --template "@html.tpl"  \
             --exit-code ${{ env.VULN_EXIT_CODE }} \
             --db-repository ${{ env.TRIVY_REPOSITORY }} \
             --ignore-unfixed \
-            -o ./vuln_scans/${{ env.REPO_APP }}_vuln_scan.table \
+            -o ./vuln_scans/${{ env.REPO_APP }}_vuln_scan.html \
             '${{ env.GH_REPO_OWNER }}/${{ env.REPO_APP }}:${{ steps.nversion.outputs.NEW_VERSION }}'
 
 # 'jpradoar/${{ env.REPO_APP }}:${{ steps.nversion.outputs.NEW_VERSION }}'
@@ -142,11 +145,11 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: trivy-report
-          path: ./vuln_scans/${{ env.REPO_APP }}_vuln_scan.table
+          path: ./vuln_scans/${{ env.REPO_APP }}_vuln_scan.html
 
       - name: Show vulnerability report
         if: steps.trivy_scan.outcome == 'failure'
-        run: cat ./vuln_scans/${{ env.REPO_APP }}_vuln_scan.table
+        run: cat ./vuln_scans/${{ env.REPO_APP }}_vuln_scan.html
 
       - name: Prepare GitHub issue body
         if: steps.trivy_scan.outcome == 'failure'
@@ -155,14 +158,17 @@ jobs:
           echo "<br>![](https://custom-icon-badges.demolab.com/badge/Vulnerability-detected-red.svg) ![](https://custom-icon-badges.demolab.com/badge/Affected_version-${{ steps.nversion.outputs.NEW_VERSION }}-purple.svg) <br>" >> /tmp/vuln_info.md
           echo "* Detected in image: [${{ env.REPO_APP }}](https://hub.docker.com/repository/docker/${{ env.DH_REPO_OWNER }}/${{ env.REPO_APP }}/general)" >> /tmp/vuln_info.md
           echo "* Detected in commit: ${{ github.sha }}" >> /tmp/vuln_info.md
-          echo "* Vulnerability report: [vuln_report](https://github.com/${{ env.DH_REPO_OWNER }}/${{ env.REPO_APP }}/blob/main/vuln_scans/${{ env.REPO_APP }}_vuln_scan.table)" >> /tmp/vuln_info.md
+          echo "* Vulnerability report: [vuln_report](https://github.com/${{ env.DH_REPO_OWNER }}/${{ env.REPO_APP }}/blob/development/vuln_scans/${{ env.REPO_APP }}_vuln_scan.html)" >> /tmp/vuln_info.md
+
+# PARA MAIN
+# echo "* Vulnerability report: [vuln_report](https://github.com/${{ env.DH_REPO_OWNER }}/${{ env.REPO_APP }}/blob/main/vuln_scans/${{ env.REPO_APP }}_vuln_scan.html)" >> /tmp/vuln_info.md
 
       - name: Commit vulnerability report to repo
         if: steps.trivy_scan.outcome == 'failure'
         uses: EndBug/add-and-commit@v9
         with:
           message: 'AutoCommit: upload vuln scan report'
-          add: './vuln_scans/${{ env.REPO_APP }}_vuln_scan.table'
+          add: './vuln_scans/${{ env.REPO_APP }}_vuln_scan.html'
 
 
 
@@ -208,6 +214,9 @@ jobs:
         env:
           SLACK_CHANNEL: ${{ env.SLACK_CHANNEL }}
           SLACK_COLOR: '#2c74e8'
-          SLACK_MESSAGE: 'Vulnerabilities found in image ${{ env.REPO_APP }}. Please check the [report](https://github.com/${{ env.DH_REPO_OWNER }}/${{ env.REPO_APP }}/blob/main/vuln_scans/${{ env.REPO_APP }}_vuln_scan.table)'
+          SLACK_MESSAGE: 'Vulnerabilities found in image ${{ env.REPO_APP }}. Please check the [report](https://github.com/${{ env.DH_REPO_OWNER }}/${{ env.REPO_APP }}/blob/development/vuln_scans/${{ env.REPO_APP }}_vuln_scan.html)'
           SLACK_TITLE: ':img_leak: Vulnerability detected in: [ ${{ env.REPO_APP }}:${{ steps.nversion.outputs.NEW_VERSION }} ]'
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+
+# PARA MAIN
+SLACK_MESSAGE: 'Vulnerabilities found in image ${{ env.REPO_APP }}. Please check the [report](https://github.com/${{ env.DH_REPO_OWNER }}/${{ env.REPO_APP }}/blob/main/vuln_scans/${{ env.REPO_APP }}_vuln_scan.html)'
