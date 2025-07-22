@@ -53,7 +53,62 @@ jobs:
 #####################################
 #  INFRAESTRUCTURE
 #####################################
+  INFRA-CICD:
+    runs-on: ubuntu-latest  
+    steps:
+    
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+
+      - name: Terraform init
+        run: |
+          terraform -chdir=terraform/ init -input=false
+
+      - name: Terraform Validate
+        id: tf_validate
+        continue-on-error: true
+        run: |
+          terraform -chdir=terraform/ validate
+          
+      - name: Notify if Terraform Validate Fails
+        if: steps.tf_validate.outcome == 'failure'
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_CHANNEL: ${{ env.SLACK_CHANNEL }}
+          SLACK_COLOR: '#ce04d1'
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}          
+          SLACK_TITLE: ':warning: Terraform validation'
+          SLACK_MESSAGE: 'Terraform validate has failed. Next time, please check your code with `terraform validate`.'
+
+      - name: Terraform Format
+        id: terraform_fmt
+        continue-on-error: true
+        run: terraform -chdir=terraform/ fmt -check
+
+      - name: Notify if Terraform Format Fails
+        if: steps.terraform_fmt.outcome == 'failure'
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_CHANNEL: ${{ env.SLACK_CHANNEL }}
+          SLACK_COLOR: '#fc0303'
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}          
+          SLACK_TITLE: ':warning: Terraform format validator'
+          SLACK_MESSAGE: 'Terraform format validation has failed. Next time, please run `terraform fmt`.'
+
+# Como es un runner efimero, no me preocupa usar un 777 en /tmp
+      - name: Terraform Security Scan
+        continue-on-error: true
+        run: |
+          mkdir -p /tmp/output && chmod 777 /tmp/output 
+          docker run --rm -v $PWD/terraform/:/data -v /tmp/output:/tmp/output  aquasec/tfsec --no-color -m CRITICAL -O /tmp/output/output.txt /data
+
+# Si bien podria usar un --output en el comando anterior, prefiero tener archivo para commitearlo y tener historico
+      - name: Show TF Security Scan
+        run: |
+          cat /tmp/output/output.txt
 
 
 #####################################
