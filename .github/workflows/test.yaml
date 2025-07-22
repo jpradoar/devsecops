@@ -53,39 +53,27 @@ jobs:
       - name: Slack Notification - Docker image built
         uses: rtCamp/action-slack-notify@v2
         env:
-          SLACK_CHANNEL: builds
           SLACK_COLOR: '#2c74e8'
-          SLACK_MESSAGE: 'hola '
-          SLACK_TITLE: 'hooolaaa'
+          SLACK_MESSAGE: 'CANAL GENERAL'
+          SLACK_TITLE: 'hola general'
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
 
 
       - name: Slack Notification - Docker image built
         uses: rtCamp/action-slack-notify@v2
         env:
-          SLACK_CHANNEL: 'builds'
           SLACK_COLOR: '#2c74e8'
-          SLACK_USERNAME: DevSecOps
-          SLACK_MESSAGE: '2222 '
-          SLACK_TITLE: '22222222222222'
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}            
+          SLACK_MESSAGE: 'CANAL BUILDS'
+          SLACK_TITLE: 'Hola build'
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WH_BUILDS }}            
 
       - name: Slack Notification - Docker image built
         uses: rtCamp/action-slack-notify@v2
         env:
-          SLACK_CHANNEL: 'C096X73PEGN'
           SLACK_COLOR: '#2c74e8'
-          SLACK_MESSAGE: '33333'
-          SLACK_TITLE: '33333333333'
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}            
+          SLACK_MESSAGE: 'CANAL SECURITY'
+          SLACK_TITLE: 'Hola security'
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WH_SECURITY }}            
 
 
-      - name: Slack Notification - Docker image built
-        uses: rtCamp/action-slack-notify@v2
-        env:
-          SLACK_CHANNEL: C096X73PEGN
-          SLACK_COLOR: '#2c74e8'
-          SLACK_MESSAGE: '44444'
-          SLACK_TITLE: '444444444'
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
             
