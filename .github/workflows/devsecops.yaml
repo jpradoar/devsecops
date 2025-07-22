@@ -101,6 +101,10 @@ jobs:
           exit 0
 
 
+      - name: Expose git commit data
+        uses: rlespinasse/git-commit-data-action@v1
+
+
       - name: Terraform format Fails (Slack)
         if: env.FMT_EXIT_CODE != '0'
         uses: rtCamp/action-slack-notify@v2
