@@ -35,6 +35,8 @@ jobs:
       - name: Check for secrets (Gitleaks)
         id: gitleaks_check
         uses: zricethezav/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         continue-on-error: true
 
       - name: Slack Notification
