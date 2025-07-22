@@ -92,7 +92,7 @@ jobs:
         uses: rtCamp/action-slack-notify@v2
         env:
           SLACK_COLOR: '#ce04d1'
-          SLACK_WEBHOOK: ${{ secrets.secrets.SLACK_WH_INFRA }}
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WH_INFRA }}
           SLACK_TITLE: ':img_terraform: Terraform format validator'
           SLACK_MESSAGE: 'Terraform format validation has failed. Next time, please run `terraform fmt`.'
 
