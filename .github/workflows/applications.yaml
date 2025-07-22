@@ -219,4 +219,4 @@ jobs:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
 
 # PARA MAIN
-SLACK_MESSAGE: 'Vulnerabilities found in image ${{ env.REPO_APP }}. Please check the [report](https://github.com/${{ env.DH_REPO_OWNER }}/${{ env.REPO_APP }}/blob/main/vuln_scans/${{ env.REPO_APP }}_vuln_scan.html)'
+# SLACK_MESSAGE: 'Vulnerabilities found in image ${{ env.REPO_APP }}. Please check the [report](https://github.com/${{ env.DH_REPO_OWNER }}/${{ env.REPO_APP }}/blob/main/vuln_scans/${{ env.REPO_APP }}_vuln_scan.html)'
