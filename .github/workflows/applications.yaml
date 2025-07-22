@@ -216,9 +216,10 @@ jobs:
         env:
           SLACK_CHANNEL: ${{ env.SLACK_CHANNEL }}
           SLACK_COLOR: '#2c74e8'
-          SLACK_MESSAGE: 'Vulnerabilities found in image ${{ env.REPO_APP }}. Please check the [report](https://github.com/${{ github.repository }}/blob/development/vuln_scans/${{ env.DOCKER_IMAGE_NAME }}_vuln_scan.html)'
+          SLACK_MESSAGE: 'Vulnerabilities found in image ${{ env.REPO_APP }}. Please check the [report](https://jpradoar.github.io/devsecops/vuln_scans/${{ env.DOCKER_IMAGE_NAME }}_vuln_scan.html)'
           SLACK_TITLE: ':img_leak: Vulnerability detected in: [ ${{ env.REPO_APP }}:${{ steps.nversion.outputs.NEW_VERSION }} ]'
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
 
 # PARA MAIN
 # SLACK_MESSAGE: 'Vulnerabilities found in image ${{ env.REPO_APP }}. Please check the [report](https://github.com/${{ github.repository }}/blob/main/vuln_scans/${{ env.DOCKER_IMAGE_NAME }}_vuln_scan.html)'
+
