@@ -2,7 +2,7 @@ name: APPLICATION-CICD
 on:
   push:
     branches:
-      - development
+      - development_x
     paths:
       - '.github/workflows/test.yaml'
 

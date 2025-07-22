@@ -3,14 +3,14 @@ on:
   
   pull_request:
     branches:
-      - main
+      - main_x
     paths:
       - 'terraform/*.tf'
       - '.github/workflows/devsecops.yaml'
   
   push:
     branches:
-      - development
+      - development_x
 
 
 jobs:
