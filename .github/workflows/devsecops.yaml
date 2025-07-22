@@ -19,8 +19,8 @@ on:
 env:
   
   CONTINUE_ON_WORKFLOW_ERRORS: true # false si sos mala onda y queres que se detenga el workflow (y no mande a slack)
-  SLACK_CHANNEL: 'general'
-  SLACK_MSG_COLOR: '#0092ff'
+  SLACK_CHANNEL:    'general'
+  SLACK_MSG_COLOR:  '#0092ff'
 
 jobs:
 
@@ -121,6 +121,7 @@ jobs:
 
     env:
       DH_REPO_OWNER:       'jpradoar'
+      GH_REPO_OWNER:       'jpradoar'
       REPO_APP:            'insecure_image'
       BUILD_CONTEXT:       './app'
       COMMITER_NAME:       'AutoCommit'
@@ -136,10 +137,10 @@ jobs:
 
     runs-on: ubuntu-latest
     permissions:
-      contents:         write
-      security-events:  write
-      actions:          read
-      issues:           write
+      contents:         write   # get the default GITHUB_TOKEN write permission to commit and push the changed files back to the repository.
+      security-events:  write   # for github/codeql-action/upload-sarif to upload SARIF results
+      actions:          read    # only required for a private repository by github/codeql-action/upload-sarif to get the Action run status  
+      issues:           write   # to create new issues in workflows
 
     steps:
       - name: Checkout repository
@@ -148,7 +149,7 @@ jobs:
       - name: Login to Docker Hub
         uses: docker/login-action@v2
         with:
-          username: 'jpradoar'
+          username: ${{ env.GH_REPO_OWNER }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Set up Docker Buildx
