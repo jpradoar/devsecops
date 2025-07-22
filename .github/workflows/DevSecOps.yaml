@@ -91,7 +91,7 @@ jobs:
           SLACK_CHANNEL: ${{ env.SLACK_CHANNEL }}
           SLACK_COLOR: '#b204c9'
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}          
-          SLACK_TITLE: ':img_terraform: Terraform validation'
+          SLACK_TITLE: ':img_terraform:  Terraform validation'
           SLACK_MESSAGE: 'Terraform validate has failed. Please check your code with `terraform validate`.'
 
 
@@ -112,9 +112,7 @@ jobs:
           SLACK_COLOR:    '#b204c9'
           SLACK_WEBHOOK:  ${{ secrets.SLACK_WEBHOOK }}          
           SLACK_TITLE:    ':img_terraform: Terraform format validator'
-          SLACK_MESSAGE: |
-            'Terraform format validation has failed. 
-            ${{ env.GIT_COMMIT_AUTHOR_NAME }} please check your code with `terraform fmt` next time   ;) '
+          SLACK_MESSAGE: 'Terraform format validation has failed. ${{ env.GIT_COMMIT_AUTHOR_NAME }} please check your code with `terraform fmt` next time   ;) '
 
 
       - name: Terraform Security Scan
