@@ -27,12 +27,15 @@ jobs:
         with:
           fetch-depth: 0  # Required for Gitleaks to scan the entire history
 
-      - name: Check for secrets (Gitleaks)
-        id: gitleaks_check
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        continue-on-error: true
+      #-------------------------
+      # El action tiene un bug que a veces no detecta los leaks
+      #-------------------------
+      #- name: Check for secrets (Gitleaks)
+      #  id: gitleaks_check
+      #  uses: gitleaks/gitleaks-action@v2
+      #  env:
+      #    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #  continue-on-error: true
 
       - name: Check for secret (Gitleak docker)
         id: gitleaks_check_docker
@@ -45,6 +48,6 @@ jobs:
         uses: rtCamp/action-slack-notify@v2
         env:
           SLACK_COLOR:    '#fc0303'
-          SLACK_WEBHOOK:  ${{ secrets.SLACK_WH_SECURITY }}          
-          SLACK_TITLE:    ':warning: Gitleaks'
+          SLACK_WEBHOOK:  ${{ secrets.SLACK_WH_SECURITY }}
+          SLACK_TITLE:    ':rotating_light:  Possible security leak'
           SLACK_MESSAGE:  'Gitleaks found a security problem!!!'
