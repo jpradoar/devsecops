@@ -17,6 +17,8 @@ on:
 
 
 env:
+  
+  CONTINUE_ON_WORKFLOW_ERRORS: true # false si sos mala onda y queres que se detenga el workflow (y no mande a slack)
   SLACK_CHANNEL: 'general'
   SLACK_MSG_COLOR: '#0092ff'
 
@@ -27,15 +29,15 @@ jobs:
 #####################################
   BASSICS-CICD:
     runs-on: ubuntu-latest  
-
     steps:
+    
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Check for secrets (Gitleaks)
         id: gitleaks_check
         uses: zricethezav/gitleaks-action@v2
-        continue-on-error: true  # Para que el workflow no se detenga
+        continue-on-error: ${{ env.CONTINUE_ON_WORKFLOW_ERRORS }} # Para que el workflow no se detenga
 
       - name: Slack Notification
         if: steps.gitleaks_check.outcome == 'failure'
@@ -44,5 +46,16 @@ jobs:
           SLACK_CHANNEL:  ${{ env.SLACK_CHANNEL }}
           SLACK_COLOR:    '#fc0303'
           SLACK_WEBHOOK:  ${{ secrets.SLACK_WEBHOOK }}          
-          SLACK_TITLE:    ':warning: Gitleaks'
-          SLACK_MESSAGE:  'Gitleaks found a security problem!!!'
+          SLACK_TITLE:    ':skull: Gitleaks'
+          SLACK_MESSAGE:  'I found a security problem in this commit: ${{ github.sha }}'
+
+
+#####################################
+#  INFRAESTRUCTURE
+#####################################
+
+
+
+#####################################
+#  APPLICATIONS
+#####################################
