@@ -25,25 +25,24 @@ jobs:
 #####################################
 #  GENERICS
 #####################################
+  BASSICS-CICD:
+    runs-on: ubuntu-latest  
 
-BASSICS-CICD:
-  runs-on: ubuntu-latest  
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-  steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Check for secrets (Gitleaks)
+        id: gitleaks_check
+        uses: zricethezav/gitleaks-action@v2
+        continue-on-error: true  # Para que el workflow no se detenga
 
-    - name: Check for secrets (Gitleaks)
-      id: gitleaks_check
-      uses: zricethezav/gitleaks-action@v2
-      continue-on-error: true  # pa que el workflow no se detenga
-
-    - name: Slack Notification
-      if: steps.gitleaks_check.outcome == 'failure'
-      uses: rtCamp/action-slack-notify@v2
-      env:
-        SLACK_CHANNEL:  ${{ env.SLACK_CHANNEL }}
-        SLACK_COLOR:    '#fc0303'
-        SLACK_WEBHOOK:  ${{ secrets.SLACK_WEBHOOK }}          
-        SLACK_TITLE:    ':warning: Gitleaks'
-        SLACK_MESSAGE:  'Gitleaks found a security problem!!!'
+      - name: Slack Notification
+        if: steps.gitleaks_check.outcome == 'failure'
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_CHANNEL:  ${{ env.SLACK_CHANNEL }}
+          SLACK_COLOR:    '#fc0303'
+          SLACK_WEBHOOK:  ${{ secrets.SLACK_WEBHOOK }}          
+          SLACK_TITLE:    ':warning: Gitleaks'
+          SLACK_MESSAGE:  'Gitleaks found a security problem!!!'
