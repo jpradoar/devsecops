@@ -58,3 +58,34 @@ jobs:
           SLACK_MESSAGE: 'hola '
           SLACK_TITLE: 'hooolaaa'
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+
+
+      - name: Slack Notification - Docker image built
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_CHANNEL: 'builds'
+          SLACK_COLOR: '#2c74e8'
+          SLACK_USERNAME: DevSecOps
+          SLACK_MESSAGE: '2222 '
+          SLACK_TITLE: '22222222222222'
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}            
+
+      - name: Slack Notification - Docker image built
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_CHANNEL: 'C096X73PEGN'
+          SLACK_COLOR: '#2c74e8'
+          SLACK_MESSAGE: '33333'
+          SLACK_TITLE: '33333333333'
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}            
+
+
+      - name: Slack Notification - Docker image built
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_CHANNEL: C096X73PEGN
+          SLACK_COLOR: '#2c74e8'
+          SLACK_MESSAGE: '44444'
+          SLACK_TITLE: '444444444'
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+            
