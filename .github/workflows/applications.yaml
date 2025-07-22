@@ -13,9 +13,6 @@ on:
       - development
 
 
-env:
-  SLACK_CHANNEL:    'general'
-
 jobs:
 
 #####################################
@@ -204,21 +201,19 @@ jobs:
       - name: Slack Notification - Docker image built
         uses: rtCamp/action-slack-notify@v2
         env:
-          SLACK_CHANNEL: 'C096X73PEGN' # Builds
           SLACK_COLOR: '#2c74e8'
           SLACK_MESSAGE: 'URL: https://hub.docker.com/repository/docker/${{ env.DH_REPO_OWNER }}/${{ env.DOCKER_IMAGE_NAME }}'
           SLACK_TITLE: ':img_docker: Docker image built: [ ${{ env.DOCKER_IMAGE_NAME }}:${{ steps.nversion.outputs.NEW_VERSION }} ]'
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WH_BUILDS }}
 
       - name: Slack Notification - Vulnerabilities detected
         if: steps.trivy_scan.outcome == 'failure'
         uses: rtCamp/action-slack-notify@v2
         env:
-          SLACK_CHANNEL: ${{ env.SLACK_CHANNEL }}
           SLACK_COLOR: '#2c74e8'
-          SLACK_MESSAGE: 'Vulnerabilities found in image ${{ env.REPO_APP }}. Please check the [report](https://jpradoar.github.io/devsecops/vuln_scans/${{ env.DOCKER_IMAGE_NAME }}_vuln_scan.html)'
+          SLACK_MESSAGE: 'Vulnerabilities found in image ${{ env.REPO_APP }}. Please check the report in: https://jpradoar.github.io/devsecops/vuln_scans/${{ env.DOCKER_IMAGE_NAME }}_vuln_scan.html'
           SLACK_TITLE: ':skull: Vulnerability detected in: [ ${{ env.DOCKER_IMAGE_NAME }}:${{ steps.nversion.outputs.NEW_VERSION }} ]'
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WH_SECURITY }}
 
 # PARA MAIN
 # SLACK_MESSAGE: 'Vulnerabilities found in image ${{ env.REPO_APP }}. Please check the [report](https://github.com/${{ github.repository }}/blob/main/vuln_scans/${{ env.DOCKER_IMAGE_NAME }}_vuln_scan.html)'
