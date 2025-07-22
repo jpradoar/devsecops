@@ -164,6 +164,14 @@ jobs:
           message: 'AutoCommit: upload vuln scan report'
           add: './vuln_scans/${{ env.REPO_APP }}_vuln_scan.table'
 
+
+
+#---------------------
+# Importante, requiere que tengas el label para el issue
+# ref:  https://github.com/jpradoar/devsecops/labels
+# Si no lo tenes o no lo queres poner, comenta la linea de "--label vulnerability"
+#---------------------
+
       - name: Create GitHub issue for vulnerability
         if: steps.trivy_scan.outcome == 'failure'
         run: |
@@ -172,7 +180,8 @@ jobs:
             --title ":skull: [vuln] Vulnerability in image ${{ env.REPO_APP }}" \
             --body-file '/tmp/vuln_info.md' \
             --assignee "${{ env.DH_REPO_OWNER }}" \
-            --label bug --label vulnerability
+            --label bug \
+            --label vulnerability
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
