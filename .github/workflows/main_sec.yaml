@@ -27,15 +27,18 @@ jobs:
     runs-on: ubuntu-latest  
     steps:
     
-      - name: Checkout repository
+      - name: Checkout repo
         uses: actions/checkout@v4
-
-      - name: Check for secrets (Gitleaks)
-        id: gitleaks_check
-        uses: zricethezav/gitleaks-action@v2
         with:
-          args: detect --source=. --redact --report-format=sarif --report-path=results.sarif --exit-code=2 --log-level=debug  
+          fetch-depth: 0  # Required for Gitleaks to scan the entire history
+
+      - name: Run Gitleaks
+        id: gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        #env:
+        #  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         continue-on-error: ${{ env.CONTINUE_ON_WORKFLOW_ERRORS }} # Para que el workflow no se detenga
+
 
       - name: Slack Notification
         if: steps.gitleaks_check.outcome == 'failure'
