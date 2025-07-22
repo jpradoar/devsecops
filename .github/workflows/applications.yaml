@@ -182,7 +182,7 @@ jobs:
         run: |
           gh issue create \
             --repo ${{ github.repository }} \
-            --title ":skull: [vuln] Vulnerability in image ${{ env.DOCKER_IMAGE_NAME }}" \
+            --title ":skull: [vuln] Vulnerability in image ${{ env.DOCKER_IMAGE_NAME }}:${{ steps.nversion.outputs.NEW_VERSION }}" \
             --body-file '/tmp/vuln_info.md' \
             --assignee "${{ env.DH_REPO_OWNER }}" \
             --label bug \
@@ -198,6 +198,8 @@ jobs:
           push: true
           tags: ${{ env.DH_REPO_OWNER }}/${{ env.DOCKER_IMAGE_NAME }}:${{ steps.nversion.outputs.NEW_VERSION }}
 
+
+            
       - name: Slack Notification - Docker image built
         uses: rtCamp/action-slack-notify@v2
         env:
@@ -205,6 +207,7 @@ jobs:
           SLACK_MESSAGE: 'URL: https://hub.docker.com/repository/docker/${{ env.DH_REPO_OWNER }}/${{ env.DOCKER_IMAGE_NAME }}'
           SLACK_TITLE: ':img_docker: Docker image built: [ ${{ env.DOCKER_IMAGE_NAME }}:${{ steps.nversion.outputs.NEW_VERSION }} ]'
           SLACK_WEBHOOK: ${{ secrets.SLACK_WH_BUILDS }}
+
 
       - name: Slack Notification - Vulnerabilities detected
         if: steps.trivy_scan.outcome == 'failure'
