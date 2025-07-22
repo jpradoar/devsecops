@@ -157,7 +157,7 @@ jobs:
           echo "<br>![](https://custom-icon-badges.demolab.com/badge/Vulnerability-detected-red.svg) ![](https://custom-icon-badges.demolab.com/badge/Affected_version-${{ steps.nversion.outputs.NEW_VERSION }}-purple.svg) <br>" >> /tmp/vuln_info.md
           echo "* Detected in image: [${{ env.DOCKER_IMAGE_NAME }}](https://hub.docker.com/repository/docker/${{ env.DH_REPO_OWNER }}/${{ env.DOCKER_IMAGE_NAME }}/general)" >> /tmp/vuln_info.md
           echo "* Detected in commit: ${{ github.sha }}" >> /tmp/vuln_info.md
-          echo "* Vulnerability report: [vuln_report](https://jpradoar.github.io/devsecops/${{ github.repository }}/vuln_scans/${{ env.DOCKER_IMAGE_NAME }}_vuln_scan.html)" >> /tmp/vuln_info.md
+          echo "* Vulnerability report: [vuln_report](https://jpradoar.github.io/${{ github.repository }}/vuln_scans/${{ env.DOCKER_IMAGE_NAME }}_vuln_scan.html)" >> /tmp/vuln_info.md
 
 # PARA MAIN
 # echo "* Vulnerability report: [vuln_report](https://github.com/${{ github.repository }}/blob/main/vuln_scans/${{ env.DOCKER_IMAGE_NAME }}_vuln_scan.html)" >> /tmp/vuln_info.md
