@@ -107,7 +107,7 @@ jobs:
       - name: Install Trivy
         run: |
           sudo apt-get update
-          sudo apt-get install -y wget apt-transport-https gnupg lsb-release
+          sudo apt-get install -y wget apt-transport-https gnupg lsb-release > /dev/null
           wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
           echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee /etc/apt/sources.list.d/trivy.list
           sudo apt-get update
@@ -133,7 +133,7 @@ jobs:
             --db-repository ${{ env.TRIVY_REPOSITORY }} \
             --ignore-unfixed \
             -o ./vuln_scans/${{ env.REPO_APP }}_vuln_scan.table \
-            '${{ env.REPO_APP }}:${{ steps.nversion.outputs.NEW_VERSION }}'
+            '${{ env.GH_REPO_OWNER }}/${{ env.REPO_APP }}:${{ steps.nversion.outputs.NEW_VERSION }}'
 
 # 'jpradoar/${{ env.REPO_APP }}:${{ steps.nversion.outputs.NEW_VERSION }}'
 
