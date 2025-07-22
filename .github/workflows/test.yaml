@@ -47,3 +47,14 @@ jobs:
       - name: test
         run: |
           echo ${{ github.repository }}
+
+
+
+      - name: Slack Notification - Docker image built
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_CHANNEL: builds
+          SLACK_COLOR: '#2c74e8'
+          SLACK_MESSAGE: 'hola '
+          SLACK_TITLE: 'hooolaaa'
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
