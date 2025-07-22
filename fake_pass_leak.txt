@@ -1,2 +1,0 @@
-AWS_SECRET_ACCESS_KEY = "AKIA1234567890EXAMPLE" # fake
-password = "superSecret123" # fake

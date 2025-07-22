@@ -183,13 +183,19 @@ jobs:
 
 
 
+      #- name: Build Docker image
+      #  id: docker_build
+      #  uses: docker/build-push-action@v4
+      #  with:
+      #    context: ${{ env.BUILD_CONTEXT }}
+      #    push: false
+      #    tags: jpradoar/${{ env.REPO_APP }}:${{ steps.nversion.outputs.NEW_VERSION }}
+
       - name: Build Docker image
         id: docker_build
-        uses: docker/build-push-action@v4
-        with:
-          context: ${{ env.BUILD_CONTEXT }}
-          push: false
-          tags: jpradoar/${{ env.REPO_APP }}:${{ steps.nversion.outputs.NEW_VERSION }}
+        run:
+          docker build -t jpradoar/${{ env.REPO_APP }}:${{ steps.nversion.outputs.NEW_VERSION }} ${{ env.BUILD_CONTEXT }}
+
 
       - name: Install Trivy
         run: |
