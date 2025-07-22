@@ -160,7 +160,7 @@ jobs:
           echo "<br>![](https://custom-icon-badges.demolab.com/badge/Vulnerability-detected-red.svg) ![](https://custom-icon-badges.demolab.com/badge/Affected_version-${{ steps.nversion.outputs.NEW_VERSION }}-purple.svg) <br>" >> /tmp/vuln_info.md
           echo "* Detected in image: [${{ env.DOCKER_IMAGE_NAME }}](https://hub.docker.com/repository/docker/${{ env.DH_REPO_OWNER }}/${{ env.DOCKER_IMAGE_NAME }}/general)" >> /tmp/vuln_info.md
           echo "* Detected in commit: ${{ github.sha }}" >> /tmp/vuln_info.md
-          echo "* Vulnerability report: [vuln_report](https://github.com/${{ github.repository }}/blob/development/vuln_scans/${{ env.DOCKER_IMAGE_NAME }}_vuln_scan.html)" >> /tmp/vuln_info.md
+          echo "* Vulnerability report: [vuln_report](https://jpradoar.github.io/devsecops/${{ github.repository }}/vuln_scans/${{ env.DOCKER_IMAGE_NAME }}_vuln_scan.html)" >> /tmp/vuln_info.md
 
 # PARA MAIN
 # echo "* Vulnerability report: [vuln_report](https://github.com/${{ github.repository }}/blob/main/vuln_scans/${{ env.DOCKER_IMAGE_NAME }}_vuln_scan.html)" >> /tmp/vuln_info.md
@@ -204,7 +204,7 @@ jobs:
       - name: Slack Notification - Docker image built
         uses: rtCamp/action-slack-notify@v2
         env:
-          SLACK_CHANNEL: ${{ env.SLACK_CHANNEL }}
+          SLACK_CHANNEL: 'C096X73PEGN' # Builds
           SLACK_COLOR: '#2c74e8'
           SLACK_MESSAGE: 'URL: https://hub.docker.com/repository/docker/${{ env.DH_REPO_OWNER }}/${{ env.DOCKER_IMAGE_NAME }}'
           SLACK_TITLE: ':img_docker: Docker image built: [ ${{ env.DOCKER_IMAGE_NAME }}:${{ steps.nversion.outputs.NEW_VERSION }} ]'
@@ -217,10 +217,9 @@ jobs:
           SLACK_CHANNEL: ${{ env.SLACK_CHANNEL }}
           SLACK_COLOR: '#2c74e8'
           SLACK_MESSAGE: 'Vulnerabilities found in image ${{ env.REPO_APP }}. Please check the [report](https://jpradoar.github.io/devsecops/vuln_scans/${{ env.DOCKER_IMAGE_NAME }}_vuln_scan.html)'
-          SLACK_TITLE: ':img_leak: Vulnerability detected in: [ ${{ env.DOCKER_IMAGE_NAME }}:${{ steps.nversion.outputs.NEW_VERSION }} ]'
+          SLACK_TITLE: ':skull: Vulnerability detected in: [ ${{ env.DOCKER_IMAGE_NAME }}:${{ steps.nversion.outputs.NEW_VERSION }} ]'
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
 
 # PARA MAIN
 # SLACK_MESSAGE: 'Vulnerabilities found in image ${{ env.REPO_APP }}. Please check the [report](https://github.com/${{ github.repository }}/blob/main/vuln_scans/${{ env.DOCKER_IMAGE_NAME }}_vuln_scan.html)'
-
 
