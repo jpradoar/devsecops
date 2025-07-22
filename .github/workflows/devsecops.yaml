@@ -54,6 +54,7 @@ jobs:
 #  INFRAESTRUCTURE
 #####################################
   INFRA-CICD:
+    needs: BASSICS-CICD
     runs-on: ubuntu-latest  
     steps:
     
@@ -153,6 +154,15 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
+
+
+#------------------------------
+# CUSTOM DOCKERHUB VERSIONS
+#  OJO, ESTO AÚN ESTA EN DESARROLLO, USALO BAJO TU PROPIO RESPONSABILIDAD.
+#
+#  REF:  https://github.com/marketplace/actions/genericsemanticversion#triggers
+#------------------------------
+
       - name: Show last version of Docker Hub image
         id: last_version_remote_file
         run: |
@@ -166,6 +176,12 @@ jobs:
         with:
           COMMIT_MSG: ${{ github.event.head_commit.message }}
           VERSION: ${{ steps.last_version_remote_file.outputs.LAST_VERSION }}
+
+#------------------------------
+# FIN CUSTOM DOCKERHUB VERSIONS
+#------------------------------
+
+
 
       - name: Build Docker image
         id: docker_build
@@ -256,7 +272,7 @@ jobs:
           SLACK_CHANNEL: ${{ env.SLACK_CHANNEL }}
           SLACK_COLOR: '#0092ff'
           SLACK_MESSAGE: 'URL: https://hub.docker.com/repository/docker/jpradoar/${{ env.REPO_APP }}'
-          SLACK_TITLE: ':rocket: Docker image built: [ ${{ env.REPO_APP }}:${{ steps.nversion.outputs.NEW_VERSION }} ]'
+          SLACK_TITLE: ':img_leak: Docker image built: [ ${{ env.REPO_APP }}:${{ steps.nversion.outputs.NEW_VERSION }} ]'
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
 
       - name: Slack Notification - Vulnerabilities detected
