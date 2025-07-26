@@ -53,7 +53,7 @@ jobs:
 #  INFRAESTRUCTURE
 #####################################
   INFRA-CICD:
-    needs: [BASSICS-CICD]
+    #needs: [BASSICS-CICD]
     runs-on: ubuntu-latest
     steps:
 
@@ -114,7 +114,7 @@ jobs:
 #####################################
 
   APPLICATION-CICD:
-    needs: [BASSICS-CICD, INFRA-CICD]
+    #needs: [BASSICS-CICD, INFRA-CICD]
 
     env:
       DH_REPO_OWNER:       'jpradoar'
