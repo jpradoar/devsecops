@@ -1,0 +1,293 @@
+name: DevSecOps
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+#####################################
+#  GENERICS
+#####################################
+  BASSICS-CICD:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Required for Gitleaks to scan the entire history
+
+      #-------------------------
+      # El action tiene un bug que a veces no detecta los leaks
+      #-------------------------
+      #- name: Check for secrets (Gitleaks)
+      #  id: gitleaks_check
+      #  uses: gitleaks/gitleaks-action@v2
+      #  env:
+      #    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #  continue-on-error: true
+
+      - name: Check for secret (Gitleak docker)
+        id: gitleaks_check_docker
+        run: docker run --rm -v $PWD:/data zricethezav/gitleaks:v8.28.0 dir /data -v --exit-code 1
+        continue-on-error: true
+
+      - name: Slack Notification
+        if: steps.gitleaks_check_docker.outcome == 'failure'
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_COLOR:    '#fc0303'
+          SLACK_WEBHOOK:  ${{ secrets.SLACK_WH_SECURITY }}
+          SLACK_TITLE:    ':rotating_light:  Possible security leak'
+          SLACK_MESSAGE:  'Gitleaks found a security problem!!!'
+
+
+
+#####################################
+#  INFRAESTRUCTURE
+#####################################
+  INFRA-CICD:
+    #needs: [BASSICS-CICD]
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+
+      - name: Terraform init
+        run: |
+          terraform -chdir=terraform/ init -input=false
+
+      - name: Terraform Validate
+        id: tf_validate
+        continue-on-error: true
+        run: |
+          terraform -chdir=terraform/ validate
+
+      - name: Notify if Terraform Validate Fails
+        if: steps.tf_validate.outcome == 'failure'
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_COLOR:    '#ce04d1'
+          SLACK_WEBHOOK:  ${{ secrets.SLACK_WH_INFRA }}
+          SLACK_TITLE:    ':img_terraform: Terraform validation'
+          SLACK_MESSAGE:  'Terraform validate has failed. Next time, please check your code with `terraform validate`.'
+
+      #- name: Terraform Format
+      #  id: terraform_fmt
+      #  continue-on-error: true
+      #  run: terraform -chdir=terraform/ fmt -check
+
+      #- name: Notify if Terraform Format Fails
+      #  if: steps.terraform_fmt.outcome == 'failure'
+      #  uses: rtCamp/action-slack-notify@v2
+      #  env:
+      #    SLACK_COLOR: '#ce04d1'
+      #    SLACK_WEBHOOK: ${{ secrets.SLACK_WH_INFRA }}
+      #    SLACK_TITLE: ':img_terraform: Terraform format validator'
+      #    SLACK_MESSAGE: 'Terraform format validation has failed. Next time, please run `terraform fmt`.'
+
+# Como es un runner efimero, no me preocupa usar un 777 en /tmp
+      - name: Terraform Security Scan
+        continue-on-error: true
+        run: |
+          mkdir -p /tmp/output && chmod 777 /tmp/output
+          docker run --rm -v $PWD/terraform/:/data -v /tmp/output:/tmp/output  aquasec/tfsec --no-color -m CRITICAL -O /tmp/output/output.txt /data
+
+# Si bien podria usar un --output en el comando anterior, prefiero tener archivo para commitearlo y tener historico
+      - name: Show TF Security Scan
+        run: |
+          cat /tmp/output/output.txt
+
+      - name: Notify Terraform Sec
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_COLOR: '#ce04d1'
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WH_INFRA }}
+          SLACK_TITLE: ':img_terraform: Terraform Scanner'
+          SLACK_MESSAGE: 'Terraform scan found a potential security risk.'
+
+#####################################
+#  APPLICATIONS
+#####################################
+
+  APPLICATION-CICD:
+    #needs: [BASSICS-CICD, INFRA-CICD]
+
+    env:
+      DH_REPO_OWNER:       'jpradoar'
+      DOCKER_IMAGE_NAME:   'insecure_image'
+      GH_REPO_OWNER:       'jpradoar'
+      GH_REPO_NAME:        'devsecops'
+      BUILD_CONTEXT:       './app'
+      COMMITER_NAME:       'AutoCommit'
+      VULN_SEVERITY:       'CRITICAL'
+      VULN_TYPE:           'os,library'
+      VULN_FORMAT:         'template'
+      VULN_TIMEOUT_SCAN:   '2m0s'
+      VULN_SCANNERS:       'vuln,secret,misconfig,license'
+      VULN_IGNORED_LIC:    'MIT'
+      VULN_EXIT_CODE:      1
+      TRIVY_DISABLE_VEX_NOTICE: true
+      TRIVY_REPOSITORY:    'public.ecr.aws/aquasecurity/trivy-db:2'
+
+    runs-on: ubuntu-latest
+    permissions:
+      contents:         write
+      security-events:  write
+      actions:          read
+      issues:           write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ env.GH_REPO_OWNER }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+#------------------------------
+# CUSTOM DOCKERHUB VERSIONS
+#  OJO, ESTO ESTA EN DESARROLLO, USALO BAJO TU PROPIO RESPONSABILIDAD.
+#
+#  REF:  https://github.com/marketplace/actions/genericsemanticversion#triggers
+#------------------------------
+      - name: Show last version of Docker Hub image
+        id: last_version_remote_file
+        run: |
+          LastVersion=$(curl -s "https://hub.docker.com/v2/repositories/${{ env.DH_REPO_OWNER }}/${{ env.DOCKER_IMAGE_NAME }}/tags/?page_size=10" \
+            | jq -r '.results[].name' | grep -v latest | sort -V | tail -1)
+          echo "LAST_VERSION=$LastVersion" >> "$GITHUB_OUTPUT"
+
+      - name: Generate new version with semantic version
+        id: nversion
+        uses: jpradoar/ga-semanticversion@v1.0.0
+        with:
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
+          VERSION: ${{ steps.last_version_remote_file.outputs.LAST_VERSION }}
+#------------------------------
+# FIN CUSTOM DOCKERHUB VERSIONS
+#------------------------------
+
+      - name: Build Docker image
+        id: docker_build
+        run:
+          docker build -t ${{ env.DH_REPO_OWNER }}/${{ env.DOCKER_IMAGE_NAME }}:${{ steps.nversion.outputs.NEW_VERSION }} ${{ env.BUILD_CONTEXT }}
+
+      - name: Install Trivy
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget apt-transport-https gnupg lsb-release > /dev/null
+          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
+          echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee /etc/apt/sources.list.d/trivy.list
+          sudo apt-get update
+          sudo apt-get install -y trivy
+
+      - name: Run Trivy scan on Docker image
+        id: trivy_scan
+        continue-on-error: true
+        run: |
+          mkdir -p ./vuln_scans
+          wget -qN https://raw.githubusercontent.com/${{ env.GH_REPO_OWNER }}/${{ env.GH_REPO_NAME }}/refs/heads/main/vuln_scans/html.tpl;
+          rm -rf ./vuln_scans/${{ env.DOCKER_IMAGE_NAME }}_vuln_scan.html;
+          trivy image \
+            --scanners ${{ env.VULN_SCANNERS }} \
+            --severity ${{ env.VULN_SEVERITY }} \
+            --timeout ${{ env.VULN_TIMEOUT_SCAN }} \
+            --pkg-types ${{ env.VULN_TYPE }} \
+            --license-full \
+            --ignored-licenses ${{ env.VULN_IGNORED_LIC }} \
+            --format ${{ env.VULN_FORMAT }} \
+            --template "@html.tpl"  \
+            --exit-code ${{ env.VULN_EXIT_CODE }} \
+            --db-repository ${{ env.TRIVY_REPOSITORY }} \
+            --ignore-unfixed \
+            -o ./vuln_scans/${{ env.DOCKER_IMAGE_NAME }}_vuln_scan.html \
+            '${{ env.DH_REPO_OWNER }}/${{ env.DOCKER_IMAGE_NAME }}:${{ steps.nversion.outputs.NEW_VERSION }}'
+
+      - name: Upload vulnerability report as artifact
+        if: steps.trivy_scan.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-report
+          path: ./vuln_scans/${{ env.DOCKER_IMAGE_NAME }}_vuln_scan.html
+
+      - name: Show vulnerability report
+        if: steps.trivy_scan.outcome == 'failure'
+        run: cat ./vuln_scans/${{ env.DOCKER_IMAGE_NAME }}_vuln_scan.html
+
+      - name: Prepare GitHub issue body
+        if: steps.trivy_scan.outcome == 'failure'
+        run: |
+          echo "### See detailed information in: " > /tmp/vuln_info.md
+          echo "<br>![](https://custom-icon-badges.demolab.com/badge/Vulnerability-detected-red.svg) ![](https://custom-icon-badges.demolab.com/badge/Affected_version-${{ steps.nversion.outputs.NEW_VERSION }}-purple.svg) <br>" >> /tmp/vuln_info.md
+          echo "* Detected in image: [${{ env.DOCKER_IMAGE_NAME }}](https://hub.docker.com/repository/docker/${{ env.DH_REPO_OWNER }}/${{ env.DOCKER_IMAGE_NAME }}/general)" >> /tmp/vuln_info.md
+          echo "* Detected in commit: ${{ github.sha }}" >> /tmp/vuln_info.md
+          echo "* Vulnerability report: [vuln_report](https://${{ env.GH_REPO_OWNER }}.github.io/${{ env.GH_REPO_NAME }}/vuln_scans/${{ env.DOCKER_IMAGE_NAME }}_vuln_scan.html)" >> /tmp/vuln_info.md
+
+      - name: Commit vulnerability report to repo
+        if: steps.trivy_scan.outcome == 'failure'
+        uses: EndBug/add-and-commit@v9
+        with:
+          message: 'AutoCommit: upload vuln scan report'
+          add: './vuln_scans/${{ env.DOCKER_IMAGE_NAME }}_vuln_scan.html'
+
+#---------------------
+# Importante, requiere que tengas el label para el issue
+# ref:  https://github.com/jpradoar/devsecops/labels
+# Si no lo tenes o no lo queres poner, comenta la linea de "--label vulnerability"
+#---------------------
+      - name: Create GitHub issue for vulnerability
+        if: steps.trivy_scan.outcome == 'failure'
+        run: |
+          gh issue create \
+            --repo ${{ github.repository }} \
+            --title ":skull: [vuln] Vulnerability in image ${{ env.DOCKER_IMAGE_NAME }}:${{ steps.nversion.outputs.NEW_VERSION }}" \
+            --body-file '/tmp/vuln_info.md' \
+            --assignee "${{ env.DH_REPO_OWNER }}" \
+            --label bug \
+            --label vulnerability
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Slack Notification - GitHub issue
+        if: steps.trivy_scan.outcome == 'failure'
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_COLOR: '#2c74e8'
+          SLACK_TITLE: ':information_source: New  GitHub issue was created'
+          SLACK_MESSAGE: 'You can see it in:  https://github.com/${{ env.GH_REPO_OWNER }}/${{ env.GH_REPO_NAME }}/issues'
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }} # General channel
+
+      - name: Push Docker image (only if scan passes)
+        if: steps.trivy_scan.outcome == 'success'
+        uses: docker/build-push-action@v4
+        with:
+          context: ${{ env.BUILD_CONTEXT }}
+          push: true
+          tags: ${{ env.DH_REPO_OWNER }}/${{ env.DOCKER_IMAGE_NAME }}:${{ steps.nversion.outputs.NEW_VERSION }}
+
+      - name: Slack Notification - Docker image built
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_COLOR: '#2c74e8'
+          SLACK_TITLE: ':img_docker: Docker image built: [ ${{ env.DOCKER_IMAGE_NAME }}:${{ steps.nversion.outputs.NEW_VERSION }} ]'
+          SLACK_MESSAGE: 'URL: https://hub.docker.com/repository/docker/${{ env.DH_REPO_OWNER }}/${{ env.DOCKER_IMAGE_NAME }}'
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WH_BUILDS }}
+
+      - name: Slack Notification - Vulnerabilities detected
+        if: steps.trivy_scan.outcome == 'failure'
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_COLOR: '#2c74e8'
+          SLACK_TITLE: ':skull: DockerHub Push blocked - Vulnerabilities in: [ ${{ env.DOCKER_IMAGE_NAME }}:${{ steps.nversion.outputs.NEW_VERSION }} ]'
+          SLACK_MESSAGE: 'Vulnerabilities found in image ${{ env.REPO_APP }}. Please check the report in: https://${{ env.GH_REPO_OWNER }}.github.io/devsecops/vuln_scans/${{ env.DOCKER_IMAGE_NAME }}_vuln_scan.html'
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WH_SECURITY }}
