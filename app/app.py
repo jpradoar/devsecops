@@ -5,7 +5,7 @@ app = Flask(__name__)
 
 #------------------------------------------
 # Mala práctica: credenciales hardcodeadas
-DB_PASSWORD = "zzzzz"
+DB_PASSWORD = "SuperSecretPassword1234!"
 #------------------------------------------
 
 @app.route("/")
