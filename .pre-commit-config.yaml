@@ -1,0 +1,75 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-merge-conflict    # checks for files that contain merge conflict strings.
+      - id: check-added-large-files # Max 100Mb for upload files. (this avoid your team upload big files in github)
+        args: ['--maxkb=100']
+      - id: end-of-file-fixer      # ensures that a file is either empty, or ends with one newline.
+      - id: trailing-whitespace    # trims trailing whitespace.
+      # 
+      - id: check-case-conflict    # checks for files that would conflict in case-insensitive filesystems.
+      - id: detect-private-key     # detects the presence of private keys.
+      - id: fix-byte-order-marker  # removes utf-8 byte order marker.
+      - id: mixed-line-ending      # replaces or checks mixed line ending.
+      - id: debug-statements       # Detect accidentally committed debug statements
+      - id: check-builtin-literals # Require literal syntax when initializing builtins
+
+  # Bloqueo de secretos con detect-secrets
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: ['--baseline', '.secrets.baseline']
+        stages: [pre-commit, pre-push, manual]
+
+  # Bloqueo de secretos con Gitleaks (AWS, API Keys, etc.)
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.24.2
+    hooks:
+      - id: gitleaks
+        args: ["--redact"]
+        stages: [pre-commit, pre-push]
+
+
+  - repo: https://github.com/Lucas-C/pre-commit-hooks
+    rev: v1.5.5
+    hooks:
+      - id: forbid-crlf  # Forbid files containing CRLF end-lines to be committed
+      - id: remove-crlf  # Replace CRLF end-lines by LF ones before committing
+      - id: forbid-tabs  # Forbid files containing tabs to be committed
+      - id: remove-tabs  # Replace tabs by whitespaces before committing
+
+  # Hooks locales (generalmente internos )
+  - repo: local
+    hooks:
+      # Bloqueo de archivos sensibles por nombre
+      - id: block-secret-files-by-name
+        name: Block committing obvious secret files (.env, *.pem, keys…)
+        entry: bash -c 'echo "$@" | tr " " "\n" | egrep -qi "(^|/)(\\.env(\\..*)?$|id_rsa(\\.pub)?$|id_ed25519(\\.pub)?$|.*\\.pem$|.*\\.p12$|.*\\.key$|credentials$|aws_credentials$)" && { echo "posibles credenciales o llaves privadas."; exit 1; } || exit 0'
+        language: system
+        pass_filenames: true
+        stages: [pre-commit, pre-push]
+
+      # Bloqueo de cabeceras de llaves privadas
+      - id: block-private-key-headers
+        name: Block files containing private key headers
+        entry: bash -c 'grep -RIEn "^\-\-\-\-\-BEGIN (RSA|DSA|EC|OPENSSH|PGP) PRIVATE KEY\-\-\-\-\-" "$@" && { echo "posible llave privada."; exit 1; } || exit 0'
+        language: system
+        files: '.*'
+        types: [text]
+        stages: [pre-commit, pre-push]
+
+      #------------------------
+      # Palabras filtradas (excluye .pre-commit-config.yaml y otros)
+      #------------------------
+      - id: business-internal-checks
+        name: Internal checks (forbidden keywords)
+        entry: internal-checks.sh
+        language: script
+        files: '.*'
+        types: [text]
+        stages: [pre-commit, pre-push]
+        exclude: |
+          (?x)
+          ^\.github/
