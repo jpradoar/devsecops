@@ -25,3 +25,27 @@ git reset --hard  8f19d216282d1516ad3fedf7b28e2bebb23b36c6
 git push -f origin main
 
 </pre>
+
+
+### Pre-commits
+
+pre-commit solo analiza los archivos que están en el staging area (o sea, los que ya hiciste git add).
+<br>Si creas un archivo nuevo (echo "superdupersecret" > hola.txt) pero no lo agregas al índice, pre-commit no lo ve.
+<br>
+<pre>
+
+### Ejemplo:
+  
+      echo "superdupersecret" > hola.txt
+      git add hola.txt
+      git commit -m "nuevo archivo"
+        # antes de hacer el push...
+      pre-commit run --all-files
+
+
+  
+### Resumen  
+
+	Archivos nuevos 	     necesitas git add antes de que pre-commit los vea.
+	Archivos en staging    se analizan automáticamente en cada git commit.
+	Revisión global        usa pre-commit run --all-files.
