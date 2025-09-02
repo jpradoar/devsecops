@@ -49,3 +49,7 @@ pre-commit solo analiza los archivos que están en el staging area (o sea, los q
 	Archivos nuevos 	     necesitas git add antes de que pre-commit los vea.
 	Archivos en staging    se analizan automáticamente en cada git commit.
 	Revisión global        usa pre-commit run --all-files.
+
+
+<br>
+	<img src="img/devsecops_02.png">
