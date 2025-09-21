@@ -7,7 +7,7 @@ variable "vpc_id" { default = "" }
 variable "subnet_id" { default = "" }
 
 
-variable "instance_type" { default = "t2.medium" }  
+variable "instance_type" { default = "t2.medium" }
 variable "ami" { default = "ami-064519b8c76274859" }
 variable "ec2_associate_public_ip_address" { default = true }
 

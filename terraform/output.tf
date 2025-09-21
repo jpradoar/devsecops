@@ -9,4 +9,3 @@ output "connection" {
 output "ansible" {
   value       = "ansible-playbook -i inventory.ini --key-file ../terraform/kp/${aws_key_pair.demo_sshkey_tf.key_name} main.yaml"
 }
-

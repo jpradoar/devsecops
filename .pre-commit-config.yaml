@@ -1,13 +1,23 @@
+exclude: |
+  (?x)^(
+    \.github/.*
+    |README\.md
+    |docs/.*\.md$
+    |.*/mock.*
+    |internal-checks\.sh
+  )$
+
+
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
       - id: check-merge-conflict    # checks for files that contain merge conflict strings.
-      - id: check-added-large-files # Max 100Mb for upload files. (this avoid your team upload big files in github)
+      - id: check-added-large-files # Max xMb for upload files. (this avoid your team upload big files in github)
         args: ['--maxkb=100']
       - id: end-of-file-fixer      # ensures that a file is either empty, or ends with one newline.
       - id: trailing-whitespace    # trims trailing whitespace.
-      # 
+      #
       - id: check-case-conflict    # checks for files that would conflict in case-insensitive filesystems.
       - id: detect-private-key     # detects the presence of private keys.
       - id: fix-byte-order-marker  # removes utf-8 byte order marker.
@@ -65,11 +75,14 @@ repos:
       #------------------------
       - id: business-internal-checks
         name: Internal checks (forbidden keywords)
-        entry: internal-checks.sh
+        entry: ./internal-checks.sh
         language: script
-        files: '.*'
         types: [text]
         stages: [pre-commit, pre-push]
-        exclude: |
-          (?x)
-          ^\.github/
+        # exclude: |
+        #     (?x)^(
+        #         .github/.*|
+        #         README.md|
+        #         ^docs/.*\.md$|
+        #         internal-checks.sh
+        #       )$

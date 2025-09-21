@@ -1,19 +1,20 @@
-#!/usr/bin/bash
+#!/usr/bin/env bash
 #
 # internal-checks.sh
+#  Script de ejemplo para pre-commits
 #
 set -euo pipefail
-# La IP de la oficina
-# Un string que no quiero que se suba a git
+
 KEYWORDS="99.99.99.99|SuperDuperString"
-# No quiero que analice estos dos archivos, 
-# de lo contrario se encontraria a si mismo
-FILTER="pre-commit-config.yaml\|intenral-checks.sh" 
 
-
-if grep -RIEn "$KEYWORDS" "$@" | grep -vE "$FILTER"; then
-  echo "Posible palabra prohibida"
-  exit 1
-else
+# Si no hay archivos como argumentos, salir sin error
+if [[ $# -eq 0 ]]; then
   exit 0
 fi
+
+if grep -RIEn "$KEYWORDS" "$@"; then
+  echo "Posible palabra prohibida"
+  exit 1
+fi
+
+exit 0
